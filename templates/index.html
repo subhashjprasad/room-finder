@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Room Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="{{ url_for('static', filename='buildings.js') }}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        async function initializeMap() {
+            const response = await fetch('/api/token');
+            const data = await response.json();
+            const accessToken = data.accessToken;
+
+            const map = L.map('map', { zoomControl: false }).setView([37.8719, -122.2585], 17);
+
+            let currentTileLayer = 'light';
+            let borderColor = '#444';
+            let borderColorHover = '#000';
+
+            function toggleTileLayer() {
+                if (currentTileLayer === 'dark') {
+                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`);
+                    currentTileLayer = 'light';
+                    borderColor = '#444';
+                    borderColorHover = '#000';
+                } else {
+                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`);
+                    currentTileLayer = 'dark';
+                    borderColor = '#bbb';
+                    borderColorHover = '#fff';
+                }
+
+                map.eachLayer(function(layer) {
+                    if (layer instanceof L.Marker) {
+                        updateLabelFontSize(layer);
+                    }
+                });
+
+                geojson.resetStyle();
+            }
+
+            function updateLabelFontSize(marker) {
+                const zoom = map.getZoom();
+                const label = marker.getElement().querySelector('.label-text');
+
+                if (currentTileLayer === 'light') {
+                    label.style.color = 'black';
+                } else {
+                    label.style.color = 'white';
+                }
+
+                label.style.fontSize = `${10 + 3 * (zoom - 17)}pt`;
+
+                const labelWidth = label.offsetWidth;
+                const labelHeight = label.offsetHeight;
+                const markerWidth = marker._icon.offsetWidth;
+                const markerHeight = marker._icon.offsetHeight;
+
+                label.style.marginLeft = `${(markerWidth - labelWidth) / 2}px`;
+                label.style.marginTop = `${(markerHeight - labelHeight) / 2}px`;
+            }
+
+            let tileLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+                    'Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>',
+                maxZoom: 20,
+                minZoom: 14,
+                tileSize: 512,
+                zoomOffset: -1
+            }).addTo(map);
+
+            const info = L.control();
+
+            info.onAdd = function (map) {
+                this._div = L.DomUtil.create('div', 'info');
+                this.update();
+                return this._div;
+            };
+
+            info.update = function (props) {
+                this._div.innerHTML = '<h4>Building Information</h4>' + (props ?
+                    '<b>' + props.name + '</b><br />' + props.rooms + ' available room(s)'
+                    : 'Hover over a building');
+            };
+
+            info.addTo(map);
+
+            function highlightFeature(e) {
+                const layer = e.target;
+                layer.setStyle({
+                    weight: 2,
+                    color: borderColorHover,
+                    dashArray: '',
+                    fillOpacity: 1.0
+                });
+
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                    layer.bringToFront();
+                }
+
+                info.update(layer.feature.properties);
+            }
+
+            function resetHighlight(e) {
+                geojson.resetStyle(e.target);
+                info.update();
+            }
+
+            function onEachFeature(feature, layer) {
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: resetHighlight
+                });
+            }
+
+            let geojson;
+
+            fetch('/api/available_rooms?day=M&time=11.0&duration=0.5')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+
+                    buildings.forEach(building => {
+                        building.properties.rooms = data[building.properties.name] || 0;
+
+                        const label = L.marker(building.properties.center, {
+                            icon: L.divIcon({
+                                className: 'label',
+                                html: `<div class="label-text">${building.properties.rooms}</div>`,
+                                iconSize: [0, 0]
+                            })
+                        }).addTo(map);
+
+                        updateLabelFontSize(label);
+
+                        const labelTextElement = label.getElement().querySelector('.label-text');
+                        labelTextElement.style.pointerEvents = 'none';
+
+                        label.on('add', function() {
+                            updateLabelFontSize(label);
+                        });
+                    });
+
+                    map.on('zoom', function() {
+                        map.eachLayer(function(layer) {
+                            if (layer instanceof L.Marker) {
+                                updateLabelFontSize(layer);
+                            }
+                        });
+                    });
+
+                    geojson = L.geoJson(buildings, {
+                        style: function (feature) {
+                            const availableRooms = feature.properties.rooms || 0;
+                            const fillColor = calculateFillColor(availableRooms);
+
+                            return {
+                                fillColor: fillColor,
+                                color: borderColor,
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.4
+                            };
+                        },
+                        onEachFeature: onEachFeature
+                    }).addTo(map);
+
+                    function calculateFillColor(availableRooms) {
+                        const proportion = Math.min(availableRooms / 10, 1);
+                        let red, green, blue;
+                        if (proportion < 0.5) {
+                            red = 255;
+                            green = Math.round(proportion * 2 * 255);
+                        } else {
+                            red = Math.round((1 - proportion) * 2 * 255);
+                            green = 255;
+                        }
+                        blue = 0;
+                        return `rgba(${red}, ${green}, ${blue}, 0.8)`;
+                    }
+
+                })
+                .catch(error => console.error('Error:', error));
+
+            const customControl = L.Control.extend({
+                options: {
+                    position: 'topleft'
+                },
+                onAdd: function (map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                    const button = L.DomUtil.create('button', 'leaflet-bar-custom-button', container);
+                    button.innerHTML = currentTileLayer === 'light' ? 'Dark Mode' : 'Light Mode';
+                    button.onclick = function () {
+                        toggleTileLayer();
+                        button.innerHTML = currentTileLayer === 'light' ? 'Dark Mode' : 'Light Mode';
+                    };
+                    return container;
+                }
+            });
+
+            map.addControl(new customControl());
+        }
+
+        initializeMap();
+    </script>
+</body>
+</html>

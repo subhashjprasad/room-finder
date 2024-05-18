@@ -1,0 +1,59 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Crimson Pro', serif;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+.info {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    font-size: 12pt;
+    font-family: 'Crimson Pro', serif;
+}
+
+.info h4, .info b {
+    margin-top: 5px;
+}
+
+.leaflet-top.leaflet-left {
+    padding: 0;
+}
+
+/* Adjust the leaflet control button styles */
+.leaflet-control-custom .leaflet-bar-custom-button {
+    background: rgba(255, 255, 255, 0.5); /* transparent background */
+    color: rgba(0, 0, 0, 1); /* opaque text color */
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer; /* Optional: to change cursor on hover */
+    font-size: 12pt;
+    font-family: 'Crimson Pro', serif;
+}
+
+/* Adjust hover opacity for leaflet control buttons */
+.leaflet-control-custom .leaflet-bar-custom-button:hover {
+    background: rgba(255, 255, 255, 0.7); /* slightly less transparent on hover */
+}
+
+.label {
+    text-align: center;
+    font-size: 10pt;
+    color: black;
+    font-family: 'Crimson Pro', serif;
+}
+
+.label-text {
+    background: none;
+    padding: none;
+    border-radius: 3px;
+    font-weight: bold;
+}
