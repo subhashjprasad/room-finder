@@ -120,6 +120,10 @@ html, body {
     width: auto; /* Adjust the width as needed */
 }
 
+.day-select {
+    width: 201px !important;
+}
+
 .leaflet-top.leaflet-left .control-box {
     border-radius: 7px;
 }
@@ -138,10 +142,10 @@ html, body {
     white-space: nowrap;
 }
 
-.current-time-div .checkbox {
+.current-time-div .current-checkbox {
+    margin: 0;
     margin-right: 8px;
     padding: 0;
-    margin-top: 5px;
     width: auto;
     transform: scale(1.5);
 }
