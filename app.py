@@ -13,7 +13,10 @@ password = os.environ.get("DB_PASSWORD")
 if not password:
     raise ValueError("No DB_PASSWORD environment variable set.")
 
-uri = f"mongodb+srv://subhashjprasad:{password}@cluster.mtb0pln.mongodb.net/?retryWrites=true&w=majority&appName=CLUSTER&ssl=true&ssl_cert_reqs=CERT_NONE"
+uri = os.environ.get("MONGODB_URI")
+if not uri:
+    raise ValueError("No MONGODB_URI environment variable set.")
+
 client = MongoClient(
     "mongodb+srv://username:password@cluster0.mongodb.net/test",
     ssl=True
