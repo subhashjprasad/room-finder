@@ -270,6 +270,13 @@
                 onAdd: function (map) {
                     const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom control-box');
 
+                    // Current Time Checkbox
+                    const currentTimeDiv = L.DomUtil.create('div', 'current-time-div', container);
+                    const currentTimeLabel = L.DomUtil.create('label', 'control-label', currentTimeDiv);
+                    currentTimeLabel.innerHTML = 'Use Current Time';
+                    const currentTimeCheckbox = L.DomUtil.create('input', 'current-checkbox', currentTimeDiv);
+                    currentTimeCheckbox.type = 'checkbox';
+
                     // Day selection
                     const dayLabel = L.DomUtil.create('label', 'control-label', container);
                     dayLabel.innerHTML = 'Day:';
@@ -313,7 +320,7 @@
                     const durationDiv = L.DomUtil.create('div', 'duration-control', container);
                     const durationInput = L.DomUtil.create('input', 'duration-input', durationDiv);
                     durationInput.type = 'text';
-                    durationInput.value = '0.5';
+                    durationInput.value = '1.0';
                     durationInput.readOnly = true;
                     const decrementButton = L.DomUtil.create('button', 'duration-button', durationDiv);
                     decrementButton.innerHTML = '-';
@@ -343,6 +350,51 @@
                         const timeInHours = parseInt(selectedHour) + parseInt(selectedMinute) / 60 + (selectedPeriod === 'PM' ? 12 : 0);
                         fetchData(selectedDay, timeInHours, selectedDuration);
                     }
+
+                    function setCurrentTime() {
+                        const now = new Date();
+                        const currentDay = days[now.getDay() - 1]; // getDay() returns 0 for Sunday, 1 for Monday, etc.
+                        let currentHour = now.getHours();
+                        const currentMinute = now.getMinutes() >= 30 ? 30 : 0;
+                        const currentPeriod = currentHour >= 12 ? 'PM' : 'AM';
+                        if (currentHour > 12) {
+                            currentHour -= 12;
+                        } else if (currentHour === 0) {
+                            currentHour = 12;
+                        }
+
+                        daySelect.value = currentDay;
+                        hourSelect.value = currentHour;
+                        minuteSelect.value = currentMinute;
+                        ampmSelect.value = currentPeriod;
+                    }
+
+                    function toggleCurrentTime() {
+                        if (currentTimeCheckbox.checked) {
+                            setCurrentTime();
+                            daySelect.disabled = true;
+                            hourSelect.disabled = true;
+                            minuteSelect.disabled = true;
+                            ampmSelect.disabled = true;
+                            durationInput.disabled = true; 
+                            decrementButton.disabled = true;
+                            incrementButton.disabled = true; 
+                            updateData();
+                        } else {
+                            daySelect.disabled = false;
+                            hourSelect.disabled = false;
+                            minuteSelect.disabled = false;
+                            ampmSelect.disabled = false;
+                            durationInput.disabled = false; 
+                            decrementButton.disabled = false; 
+                            incrementButton.disabled = false; 
+                        }
+                    }
+
+                    currentTimeCheckbox.checked = true; // Set the checkbox to be checked initially
+                    toggleCurrentTime();
+
+                    currentTimeCheckbox.addEventListener('change', toggleCurrentTime);
 
                     [daySelect, hourSelect, minuteSelect, ampmSelect].forEach(select => {
                         select.onchange = updateData;
