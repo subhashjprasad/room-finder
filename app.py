@@ -4,11 +4,16 @@ from pymongo.server_api import ServerApi
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # Load environment variables from .env file
 
+app = Flask(__name__)
+
+# Global MongoDB client initialization
 password = os.environ.get("DB_PASSWORD")
+if not password:
+    raise ValueError("No DB_PASSWORD environment variable set.")
 
-uri = "mongodb+srv://subhashjprasad:" + password + "@cluster.mtb0pln.mongodb.net/?retryWrites=true&w=majority&appName=CLUSTER"
+uri = f"mongodb+srv://subhashjprasad:{password}@cluster.mtb0pln.mongodb.net/?retryWrites=true&w=majority&appName=CLUSTER"
 client = MongoClient(uri, server_api=ServerApi('1'))
 
 try:
@@ -18,8 +23,6 @@ except Exception as e:
     print(e)
 
 db = client['dayTime_database']
-
-app = Flask(__name__)
 
 day_to_number = {"M": 1, "TU": 2, "W": 3, "TH": 4, "F": 5, "SA": 6, "SU": 7}
 
@@ -39,7 +42,7 @@ def combine_common_values(dicts):
         for d in dicts[1:]:
             common_values &= set(d[key])
 
-        combined_dict[key] = sorted(list(common_values), key = lambda x: extract_digits(x))
+        combined_dict[key] = sorted(list(common_values), key=lambda x: extract_digits(x))
 
     return combined_dict
 
@@ -55,6 +58,7 @@ def get_available_rooms():
 
     all_available_rooms_by_building = []
     while time < end_time:
+        available_rooms_by_building = {}
 
         query = {
             "day": day,
@@ -77,15 +81,10 @@ def index():
 @app.route('/api/token')
 def get_mapbox_token():
     access_token = os.getenv('MAPBOX_ACCESS_TOKEN')
+    if not access_token:
+        return jsonify({'error': 'No MAPBOX_ACCESS_TOKEN environment variable set.'}), 500
     return jsonify({'accessToken': access_token})
 
-@app.route('/api/available_rooms')
-def available_rooms():
-    day = request.args.get('day')
-    time = float(request.args.get('time'))
-    duration = float(request.args.get('duration'))
-    rooms = get_available_rooms(day, time, duration)
-    return jsonify(rooms)
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
