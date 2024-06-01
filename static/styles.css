@@ -145,9 +145,3 @@ html, body {
     width: auto;
     transform: scale(1.5);
 }
-
-.duration-input:disabled {
-    background-color: rgba(255, 255, 255, 0.6);
-    color: rgba(0, 0, 0, 0.5);
-    cursor: not-allowed;
-}
