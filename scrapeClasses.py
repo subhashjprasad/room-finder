@@ -62,6 +62,7 @@ day_to_number = {"M": 1, "TU": 2, "W": 3, "TH": 4, "F": 5, "SA": 6, "SU": 7}
 def get_class_information(url):
     driver.get(url)
 
+    # Lecture Scraping
     try:
         WebDriverWait(driver, wait_time).until(
             EC.presence_of_element_located((By.CLASS_NAME, "detail-days"))
@@ -88,8 +89,12 @@ def get_class_information(url):
 
     class_time = class_time.split("-")
     class_time = [string.replace(" ", "") for string in class_time]
-    class_time_start = time_string_to_number[class_time[0]]
-    class_time_end = time_string_to_number[class_time[1]]
+    if (class_time[0] in time_string_to_number and class_time[1] in time_string_to_number):
+        class_time_start = time_string_to_number[class_time[0]]
+        class_time_end = time_string_to_number[class_time[1]]
+    else:
+        print(str(class_time) + str(class_days) + str(class_location))
+        return
 
     class_times = []
     current_time = class_time_start
@@ -132,10 +137,93 @@ def get_class_information(url):
                 "occupied_times": [class_timeslot]
             }
             collection.insert_one(room_document)
+    
+    # Section Scraping
+    try:
+        WebDriverWait(driver, wait_time).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "detail-class-associated-sections-flex"))
+        )
+        sections = driver.find_elements(By.CLASS_NAME, "detail-class-associated-sections-flex")
+    except TimeoutException:
+        return
+
+    for section in sections:
+        class_days, class_time, class_location = None, None, None
+        
+        labels = section.find_elements(By.CLASS_NAME, "detail-label")
+        for label in labels:
+            text = label.text
+            parent = label.find_element(By.XPATH, '..')
+            sibling_text = parent.text.replace(text, "").strip()
+
+            if text == "Days:":
+                class_days = sibling_text
+            elif text == "Time:":
+                class_time = sibling_text
+            elif text == "Place:":
+                class_location = sibling_text
+
+        if not (class_days and class_time and class_location):
+            continue
+
+        class_time = class_time.split("-")
+        class_time = [t.replace(" ", "") for t in class_time]
+        if (class_time[0] in time_string_to_number and class_time[1] in time_string_to_number):
+            class_time_start = time_string_to_number[class_time[0]]
+            class_time_end = time_string_to_number[class_time[1]]
+        else:
+            print(str(class_time) + str(class_days) + str(class_location))
+            continue
+
+        class_times = []
+        current_time = class_time_start
+
+        while current_time < class_time_end:
+            class_times.append(current_time)
+            current_time += 0.5
+
+        if len(class_days) == 0 or len(class_time) == 0 or len(class_location) == 0: 
+            continue
+
+        class_days = class_days.split(", ")
+        class_days = [d.replace(" ", "") for d in class_days]
+
+        class_timeslots = []
+        for class_day in class_days:
+            class_timeslots.extend([(day_to_number[class_day.upper()] * 100) + t for t in class_times])
+
+        class_location_text_cut = class_location.replace("\n(opens in a new tab)", "")
+
+        parts = class_location_text_cut.split()
+        parts.pop()
+        class_building = ' '.join(parts)
+
+        if len(class_building) == 0: 
+            continue
+        
+        collection = db[class_building]
+        collection.create_index([("occupied_times", 1)])
+
+        for class_timeslot in class_timeslots:
+            room_document = collection.find_one({"room_number": class_location_text_cut})
+            if room_document:
+                existing_occupied_times = list(room_document.get("occupied_times", []))
+                existing_occupied_times.append(class_timeslot)
+                collection.update_one(
+                    {"_id": room_document["_id"]},
+                    {"$set": {"occupied_times": existing_occupied_times}}
+                )
+            else:
+                room_document = {
+                    "room_number": class_location_text_cut,
+                    "occupied_times": [class_timeslot]
+                }
+                collection.insert_one(room_document)
 
 
-next_page = "https://classes.berkeley.edu/search/class/?f%5B0%5D=im_field_term_name%3A3151"
-page_limit = 10
+next_page = "https://classes.berkeley.edu/search/class?f%5B0%5D=im_field_term_name%3A3151"
+page_limit = 330
+#1 - 330
 
 while (next_page is not None and page_limit > 0):
     driver.get(next_page)

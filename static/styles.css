@@ -8,6 +8,7 @@ html, body {
 #map {
     height: 100%;
     width: 100%;
+    cursor: pointer;
 }
 
 .info {
@@ -56,4 +57,69 @@ html, body {
     padding: none;
     border-radius: 3px;
     font-weight: bold;
+}
+
+.control-box {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    font-family: 'Crimson Pro', serif;
+}
+
+.control-box label {
+    display: block;
+    margin-bottom: 5px;
+    color: black;
+    font-size: 12pt;
+}
+
+.control-box select,
+.control-box input {
+    width: calc(100% - 20px);
+    margin-bottom: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-family: 'Crimson Pro', serif;
+}
+
+.duration-control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.duration-input {
+    flex: 1;
+    margin-right: 5px;
+}
+
+.duration-button {
+    background: none; /* transparent background */
+    color: rgba(0, 0, 0, 1); /* opaque text color */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer; /* Optional: to change cursor on hover */
+    font-size: 12pt;
+    font-family: 'Crimson Pro', serif;
+    padding: 3px 10px 7px 10px;
+    margin-bottom: 10px;
+}
+
+.time-div {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.hour-select,
+.minute-select,
+.ampm-select {
+    flex: 1;
+    margin-right: 5px;
+    width: auto; /* Adjust the width as needed */
+}
+
+.leaflet-top.leaflet-left .control-box {
+    border-radius: 7px;
 }

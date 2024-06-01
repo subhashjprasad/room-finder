@@ -19,9 +19,20 @@
 
             const map = L.map('map', { zoomControl: false }).setView([37.8719, -122.2585], 17);
 
+            // let coordinates = "";
+
+            // map.on('click', function (e) {
+            //     coordinates += '[' + e.latlng.lng + ', ' + e.latlng.lat + '],\n';
+            //     console.log(coordinates);
+            // });
+
             let currentTileLayer = 'light';
             let borderColor = '#444';
             let borderColorHover = '#000';
+            let highlightedLayer = null;
+            let permanentlyHighlightedLayer = null;
+            let geojson = null; // Declare the geojson variable here
+            let markers = []; // Array to keep track of label markers
 
             function toggleTileLayer() {
                 if (currentTileLayer === 'dark') {
@@ -42,7 +53,11 @@
                     }
                 });
 
-                geojson.resetStyle();
+                if (geojson) {
+                    geojson.eachLayer(function(layer) {
+                        geojson.resetStyle(layer);
+                    });
+                }
             }
 
             function updateLabelFontSize(marker) {
@@ -62,20 +77,20 @@
                 const markerWidth = marker._icon.offsetWidth;
                 const markerHeight = marker._icon.offsetHeight;
 
-                label.style.marginLeft = `${(markerWidth - labelWidth) / 2}px`;
+                label.style.marginLeft = `${((markerWidth - labelWidth) / 2) + (zoom - 17) / 2}px`; 
                 label.style.marginTop = `${(markerHeight - labelHeight) / 2}px`;
             }
 
             let tileLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
                 attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
                     'Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>',
-                maxZoom: 20,
+                maxZoom: 25,
                 minZoom: 14,
                 tileSize: 512,
                 zoomOffset: -1
             }).addTo(map);
 
-            const info = L.control();
+            const info = L.control({ position: 'topright' });
 
             info.onAdd = function (map) {
                 this._div = L.DomUtil.create('div', 'info');
@@ -83,17 +98,51 @@
                 return this._div;
             };
 
-            info.update = function (props) {
+            info.update = function (props, clicked = false) {
                 this._div.innerHTML = '<h4>Building Information</h4>' + (props ?
-                    '<b>' + props.name + '</b><br />' + props.rooms + ' available room(s)'
+                    '<b>' + props.name + '</b><br />' + (clicked ? props.rooms.join('<br>') : props.numRooms + ' available room' + (props.numRooms === 1 ? '' : 's'))
                     : 'Hover over a building');
             };
 
             info.addTo(map);
 
             function highlightFeature(e) {
-                const layer = e.target;
-                layer.setStyle({
+                if (e.target !== permanentlyHighlightedLayer) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        weight: 2,
+                        color: borderColorHover,
+                        dashArray: '',
+                        fillOpacity: 1.0
+                    });
+
+                    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                        layer.bringToFront();
+                    }
+
+                    info.update(layer.feature.properties);
+                    highlightedLayer = layer;
+                }
+            }
+
+            function resetHighlight(e) {
+                if (highlightedLayer && highlightedLayer !== permanentlyHighlightedLayer) {
+                    geojson.resetStyle(highlightedLayer);
+                    highlightedLayer = null;
+                }
+                if (!permanentlyHighlightedLayer) {
+                    info.update();
+                } else {
+                    info.update(permanentlyHighlightedLayer.feature.properties, true);
+                }
+            }
+
+            function permanentHighlightFeature(e) {
+                if (permanentlyHighlightedLayer) {
+                    geojson.resetStyle(permanentlyHighlightedLayer);
+                }
+                permanentlyHighlightedLayer = e.target;
+                permanentlyHighlightedLayer.setStyle({
                     weight: 2,
                     color: borderColorHover,
                     dashArray: '',
@@ -101,94 +150,104 @@
                 });
 
                 if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-                    layer.bringToFront();
+                    permanentlyHighlightedLayer.bringToFront();
                 }
 
-                info.update(layer.feature.properties);
-            }
-
-            function resetHighlight(e) {
-                geojson.resetStyle(e.target);
-                info.update();
+                map.setView(permanentlyHighlightedLayer.feature.properties.center, 19);
+                info.update(permanentlyHighlightedLayer.feature.properties, true);
             }
 
             function onEachFeature(feature, layer) {
                 layer.on({
                     mouseover: highlightFeature,
-                    mouseout: resetHighlight
+                    mouseout: resetHighlight,
+                    click: permanentHighlightFeature
                 });
             }
 
-            let geojson;
+            map.on('click', function (e) {
+                if (!e.originalEvent.target.closest('.leaflet-interactive')) {
+                    if (permanentlyHighlightedLayer) {
+                        geojson.resetStyle(permanentlyHighlightedLayer);
+                        info.update();
+                        permanentlyHighlightedLayer = null;
+                    }
+                }
+            });
 
-            fetch('/api/available_rooms?day=M&time=11.0&duration=0.5')
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
+            function fetchData(day, time, duration) {
+                fetch(`/api/available_rooms?day=${day}&time=${time}&duration=${duration}`)
+                    .then(response => response.json())
+                    .then(data => {
 
-                    buildings.forEach(building => {
-                        building.properties.rooms = data[building.properties.name] || 0;
+                        if (geojson) {
+                            map.removeLayer(geojson);
+                        }
+                        markers.forEach(marker => map.removeLayer(marker));
+                        markers = [];
 
-                        const label = L.marker(building.properties.center, {
-                            icon: L.divIcon({
-                                className: 'label',
-                                html: `<div class="label-text">${building.properties.rooms}</div>`,
-                                iconSize: [0, 0]
-                            })
+                        buildings.forEach(building => {
+                            building.properties.rooms = data[building.properties.name] || [];
+                            building.properties.numRooms = building.properties.rooms.length;
+
+                            const label = L.marker(building.properties.center, {
+                                icon: L.divIcon({
+                                    className: 'label',
+                                    html: `<div class="label-text">${building.properties.numRooms}</div>`,
+                                    iconSize: [0, 0]
+                                })
+                            }).addTo(map);
+
+                            updateLabelFontSize(label);
+
+                            const labelTextElement = label.getElement().querySelector('.label-text');
+                            labelTextElement.style.pointerEvents = 'none';
+
+                            label.on('add', function() {
+                                updateLabelFontSize(label);
+                            });
+
+                            markers.push(label);
+                        });
+
+                        map.on('zoom', function() {
+                            markers.forEach(marker => updateLabelFontSize(marker));
+                        });
+
+                        geojson = L.geoJson(buildings, {
+                            style: function (feature) {
+                                const availableRooms = feature.properties.numRooms || 0;
+                                const fillColor = calculateFillColor(availableRooms);
+
+                                return {
+                                    fillColor: fillColor,
+                                    color: borderColor,
+                                    weight: 2,
+                                    opacity: 1,
+                                    fillOpacity: 0.4
+                                };
+                            },
+                            onEachFeature: onEachFeature
                         }).addTo(map);
 
-                        updateLabelFontSize(label);
-
-                        const labelTextElement = label.getElement().querySelector('.label-text');
-                        labelTextElement.style.pointerEvents = 'none';
-
-                        label.on('add', function() {
-                            updateLabelFontSize(label);
-                        });
-                    });
-
-                    map.on('zoom', function() {
-                        map.eachLayer(function(layer) {
-                            if (layer instanceof L.Marker) {
-                                updateLabelFontSize(layer);
+                        function calculateFillColor(availableRooms) {
+                            const proportion = Math.min(availableRooms / 10, 1);
+                            let red, green, blue;
+                            if (proportion < 0.5) {
+                                red = 255;
+                                green = Math.round(proportion * 2 * 255);
+                            } else {
+                                red = Math.round((1 - proportion) * 2 * 255);
+                                green = 255;
                             }
-                        });
-                    });
-
-                    geojson = L.geoJson(buildings, {
-                        style: function (feature) {
-                            const availableRooms = feature.properties.rooms || 0;
-                            const fillColor = calculateFillColor(availableRooms);
-
-                            return {
-                                fillColor: fillColor,
-                                color: borderColor,
-                                weight: 2,
-                                opacity: 1,
-                                fillOpacity: 0.4
-                            };
-                        },
-                        onEachFeature: onEachFeature
-                    }).addTo(map);
-
-                    function calculateFillColor(availableRooms) {
-                        const proportion = Math.min(availableRooms / 10, 1);
-                        let red, green, blue;
-                        if (proportion < 0.5) {
-                            red = 255;
-                            green = Math.round(proportion * 2 * 255);
-                        } else {
-                            red = Math.round((1 - proportion) * 2 * 255);
-                            green = 255;
+                            blue = 0;
+                            return `rgba(${red}, ${green}, ${blue}, 0.8)`;
                         }
-                        blue = 0;
-                        return `rgba(${red}, ${green}, ${blue}, 0.8)`;
-                    }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
 
-                })
-                .catch(error => console.error('Error:', error));
-
-            const customControl = L.Control.extend({
+            const toggleControl = L.Control.extend({
                 options: {
                     position: 'topleft'
                 },
@@ -204,10 +263,102 @@
                 }
             });
 
-            map.addControl(new customControl());
+            const controlBox = L.Control.extend({
+                options: {
+                    position: 'topleft'
+                },
+                onAdd: function (map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom control-box');
+
+                    // Day selection
+                    const dayLabel = L.DomUtil.create('label', 'control-label', container);
+                    dayLabel.innerHTML = 'Day:';
+                    const daySelect = L.DomUtil.create('select', 'day-select', container);
+                    const days = ['M', 'TU', 'W', 'TH', 'F', 'SA', 'SU'];
+                    days.forEach(day => {
+                        const option = L.DomUtil.create('option', '', daySelect);
+                        option.value = day;
+                        option.innerHTML = day;
+                    });
+
+                    // Time selection: hours, minutes, and AM/PM
+                    const timeLabel = L.DomUtil.create('label', 'control-label', container);
+                    timeLabel.innerHTML = 'Time:';
+                    const timeDiv = L.DomUtil.create('div', 'time-div', container);
+
+                    const hourSelect = L.DomUtil.create('select', 'hour-select', timeDiv);
+                    for (let hour = 1; hour <= 12; hour++) {
+                        const option = L.DomUtil.create('option', '', hourSelect);
+                        option.value = hour;
+                        option.innerHTML = hour.toString();
+                    }
+
+                    const minuteSelect = L.DomUtil.create('select', 'minute-select', timeDiv);
+                    for (let minute = 0; minute < 60; minute += 30) {
+                        const option = L.DomUtil.create('option', '', minuteSelect);
+                        option.value = minute;
+                        option.innerHTML = minute.toString().padStart(2, '0');
+                    }
+
+                    const ampmSelect = L.DomUtil.create('select', 'ampm-select', timeDiv);
+                    ['AM', 'PM'].forEach(period => {
+                        const option = L.DomUtil.create('option', '', ampmSelect);
+                        option.value = period;
+                        option.innerHTML = period;
+                    });
+
+                    // Duration selection
+                    const durationLabel = L.DomUtil.create('label', 'control-label', container);
+                    durationLabel.innerHTML = 'Duration (hours):';
+                    const durationDiv = L.DomUtil.create('div', 'duration-control', container);
+                    const durationInput = L.DomUtil.create('input', 'duration-input', durationDiv);
+                    durationInput.type = 'text';
+                    durationInput.value = '0.5';
+                    durationInput.readOnly = true;
+                    const decrementButton = L.DomUtil.create('button', 'duration-button', durationDiv);
+                    decrementButton.innerHTML = '-';
+                    const incrementButton = L.DomUtil.create('button', 'duration-button', durationDiv);
+                    incrementButton.innerHTML = '+';
+
+                    decrementButton.onclick = function() {
+                        let currentDuration = parseFloat(durationInput.value);
+                        if (currentDuration > 0.5) {
+                            durationInput.value = (currentDuration - 0.5).toFixed(1);
+                            updateData();
+                        }
+                    };
+
+                    incrementButton.onclick = function() {
+                        let currentDuration = parseFloat(durationInput.value);
+                        durationInput.value = (currentDuration + 0.5).toFixed(1);
+                        updateData();
+                    };
+
+                    function updateData() {
+                        const selectedDay = daySelect.value;
+                        const selectedHour = hourSelect.value;
+                        const selectedMinute = minuteSelect.value;
+                        const selectedPeriod = ampmSelect.value;
+                        const selectedDuration = durationInput.value;
+                        const timeInHours = parseInt(selectedHour) + parseInt(selectedMinute) / 60 + (selectedPeriod === 'PM' ? 12 : 0);
+                        fetchData(selectedDay, timeInHours, selectedDuration);
+                    }
+
+                    [daySelect, hourSelect, minuteSelect, ampmSelect].forEach(select => {
+                        select.onchange = updateData;
+                    });
+
+                    return container;
+                }
+            });
+
+
+            map.addControl(new toggleControl());
+            map.addControl(new controlBox());
+            fetchData('F', 9.0, 0.5);
         }
 
         initializeMap();
     </script>
 </body>
-</html>
+</html> 
