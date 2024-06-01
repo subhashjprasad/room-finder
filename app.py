@@ -17,10 +17,7 @@ uri = os.environ.get("MONGODB_URI")
 if not uri:
     raise ValueError("No MONGODB_URI environment variable set.")
 
-client = MongoClient(
-    "mongodb+srv://username:password@cluster0.mongodb.net/test",
-    ssl=True
-)
+client = MongoClient(uri)
 
 try:
     client.admin.command('ping')
