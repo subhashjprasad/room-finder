@@ -353,7 +353,7 @@
 
                     function setCurrentTime() {
                         const now = new Date();
-                        const currentDay = days[now.getDay() - 1]; // getDay() returns 0 for Sunday, 1 for Monday, etc.
+                        const currentDay = days[(now.getDay() + 6) % 7]; // getDay() returns 0 for Sunday, 1 for Monday, etc.
                         let currentHour = now.getHours();
                         const currentMinute = now.getMinutes() >= 30 ? 30 : 0;
                         const currentPeriod = currentHour >= 12 ? 'PM' : 'AM';
