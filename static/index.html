@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Room Finder</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="buildings.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        async function initializeMap() {
+            const response = await fetch('data.json');
+            const data = await response.json();
+            const accessToken = 'YOUR_MAPBOX_ACCESS_TOKEN'; // Replace with your actual Mapbox token
+
+            const map = L.map('map', { zoomControl: false }).setView([37.8719, -122.2585], 17);
+
+            let currentTileLayer = 'light';
+            let borderColor = '#444';
+            let borderColorHover = '#000';
+            let highlightedLayer = null;
+            let permanentlyHighlightedLayer = null;
+            let geojson = null; // Declare the geojson variable here
+            let markers = []; // Array to keep track of label markers
+
+            function toggleTileLayer() {
+                if (currentTileLayer === 'dark') {
+                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`);
+                    currentTileLayer = 'light';
+                    borderColor = '#444';
+                    borderColorHover = '#000';
+                } else {
+                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`);
+                    currentTileLayer = 'dark';
+                    borderColor = '#bbb';
+                    borderColorHover = '#fff';
+                }
+
+                map.eachLayer(function(layer) {
+                    if (layer instanceof L.Marker) {
+                        updateLabelFontSize(layer);
+                    }
+                });
+
+                if (geojson) {
+                    geojson.eachLayer(function(layer) {
+                        geojson.resetStyle(layer);
+                    });
+                }
+            }
+
+            function updateLabelFontSize(marker) {
+                const zoom = map.getZoom();
+                const label = marker.getElement().querySelector('.label-text');
+
+                if (currentTileLayer === 'light') {
+                    label.style.color = 'black';
+                } else {
+                    label.style.color = 'white';
+                }
+
+                label.style.fontSize = `${10 + 3 * (zoom - 17)}pt`;
+
+                const labelWidth = label.offsetWidth;
+                const labelHeight = label.offsetHeight;
+                const markerWidth = marker._icon.offsetWidth;
+                const markerHeight = marker._icon.offsetHeight;
+
+                label.style.marginLeft = `${((markerWidth - labelWidth) / 2) + (zoom - 17) / 2}px`; 
+                label.style.marginTop = `${(markerHeight - labelHeight) / 2}px`;
+            }
+
+            let tileLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+                    'Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>',
+                maxZoom: 25,
+                minZoom: 14,
+                tileSize: 512,
+                zoomOffset: -1
+            }).addTo(map);
+
+            const info = L.control({ position: 'topright' });
+
+            info.onAdd = function (map) {
+                this._div = L.DomUtil.create('div', 'info');
+                this.update();
+                return this._div;
+            };
+
+            info.update = function (props, clicked = false) {
+                this._div.innerHTML = '<h4>Building Information</h4>' + (props ?
+                    '<b>' + props.name + '</b><br />' + (clicked ? props.rooms.join('<br>') : props.numRooms + ' available room' + (props.numRooms === 1 ? '' : 's'))
+                    : 'Hover over a building');
+            };
+
+            info.addTo(map);
+
+            function highlightFeature(e) {
+                if (e.target !== permanentlyHighlightedLayer) {
+                    const layer = e.target;
+                    layer.setStyle({
+                        weight: 2,
+                        color: borderColorHover,
+                        dashArray: '',
+                        fillOpacity: 1.0
+                    });
+
+                    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                        layer.bringToFront();
+                    }
+
+                    info.update(layer.feature.properties);
+                    highlightedLayer = layer;
+                }
+            }
+
+            function resetHighlight(e) {
+                if (highlightedLayer && highlightedLayer !== permanentlyHighlightedLayer) {
+                    geojson.resetStyle(highlightedLayer);
+                    highlightedLayer = null;
+                }
+                if (!permanentlyHighlightedLayer) {
+                    info.update();
+                } else {
+                    info.update(permanentlyHighlightedLayer.feature.properties, true);
+                }
+            }
+
+            function permanentHighlightFeature(e) {
+                if (permanentlyHighlightedLayer) {
+                    geojson.resetStyle(permanentlyHighlightedLayer);
+                }
+                permanentlyHighlightedLayer = e.target;
+                permanentlyHighlightedLayer.setStyle({
+                    weight: 2,
+                    color: borderColorHover,
+                    dashArray: '',
+                    fillOpacity: 1.0
+                });
+
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                    permanentlyHighlightedLayer.bringToFront();
+                }
+
+                map.setView(permanentlyHighlightedLayer.feature.properties.center, 19);
+                info.update(permanentlyHighlightedLayer.feature.properties, true);
+            }
+
+            function onEachFeature(feature, layer) {
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: resetHighlight,
+                    click: permanentHighlightFeature
+                });
+            }
+
+            map.on('click', function (e) {
+                if (!e.originalEvent.target.closest('.leaflet-interactive')) {
+                    if (permanentlyHighlightedLayer) {
+                        geojson.resetStyle(permanentlyHighlightedLayer);
+                        info.update();
+                        permanentlyHighlightedLayer = null;
+                    }
+                }
+            });
+
+            function fetchData(day, time, duration) {
+                // Replace the API call with the data from the static JSON file
+                const filteredData = data.filter(document => {
+                    return document.day === day && document.time >= time && document.time < (time + duration);
+                });
+
+                const combinedData = combineCommonValues(filteredData.map(document => document.data));
+
+                updateMap(combinedData);
+            }
+
+            function updateMap(buildings) {
+                if (geojson) {
+                    geojson.clearLayers();
+                }
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+
+                geojson = L.geoJson(buildings, {
+                    style: function (feature) {
+                        return {
+                            weight: 2,
+                            color: borderColor,
+                            dashArray: '',
+                            fillOpacity: 0.7
+                        };
+                    },
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+
+                markers = geojson.getLayers().map(layer => {
+                    const center = layer.feature.properties.center;
+                    const label = layer.feature.properties.name;
+                    const marker = L.marker(center, {
+                        icon: L.divIcon({
+                            className: 'label',
+                            html: `<span class="label-text">${label}</span>`,
+                            iconSize: [100, 40]
+                        })
+                    }).addTo(map);
+
+                    updateLabelFontSize(marker);
+
+                    return marker;
+                });
+            }
+
+            map.on('zoomend', function () {
+                markers.forEach(marker => updateLabelFontSize(marker));
+            });
+
+            function combineCommonValues(buildings) {
+                const combined = {};
+                buildings.forEach(building => {
+                    if (!combined[building.name]) {
+                        combined[building.name] = {
+                            ...building,
+                            rooms: []
+                        };
+                    }
+                    combined[building.name].rooms = combined[building.name].rooms.concat(building.rooms);
+                    combined[building.name].numRooms = combined[building.name].rooms.length;
+                });
+                return Object.values(combined);
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                const filterForm = document.createElement('div');
+                filterForm.innerHTML = `
+                    <label for="day">Day:</label>
+                    <select id="day">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+
+                    <label for="time">Start Time:</label>
+                    <input type="time" id="time" value="08:00">
+
+                    <label for="duration">Duration (hours):</label>
+                    <input type="number" id="duration" min="1" max="24" value="1">
+
+                    <button id="filterButton">Filter</button>
+                    <button id="toggleTileLayer">Toggle Tile Layer</button>
+                `;
+
+                filterForm.style.position = 'absolute';
+                filterForm.style.top = '10px';
+                filterForm.style.left = '10px';
+                filterForm.style.backgroundColor = 'white';
+                filterForm.style.padding = '10px';
+                filterForm.style.zIndex = '1000';
+
+                document.body.appendChild(filterForm);
+
+                document.getElementById('filterButton').addEventListener('click', function () {
+                    const day = document.getElementById('day').value;
+                    const time = document.getElementById('time').value;
+                    const duration = parseInt(document.getElementById('duration').value);
+
+                    fetchData(day, time, duration);
+                });
+
+                document.getElementById('toggleTileLayer').addEventListener('click', toggleTileLayer);
+
+                fetchData('Monday', '08:00', 1);
+            });
+        }
+
+        initializeMap();
+    </script>
+</body>
+</html>
