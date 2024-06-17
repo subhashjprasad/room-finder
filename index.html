@@ -17,7 +17,7 @@
             const data = await response.json();
             const accessToken = data.accessToken;
 
-            const map = L.map('map', { zoomControl: false }).setView([37.8719, -122.2585], 17);
+            const map = L.map('map', { zoomControl: false, doubleClickZoom: false }).setView([37.8719, -122.2585], 17);
 
             // let coordinates = "";
 
@@ -175,77 +175,131 @@
                 }
             });
 
-            function fetchData(day, time, duration) {
-                fetch(`/api/available_rooms?day=${day}&time=${time}&duration=${duration}`)
-                    .then(response => response.json())
-                    .then(data => {
+            async function fetchData(day, time, duration) {
+                // Fetch the data from data.json
+                let response = await fetch('/static/data.json');
+                let data = await response.json();
 
-                        if (geojson) {
-                            map.removeLayer(geojson);
-                        }
-                        markers.forEach(marker => map.removeLayer(marker));
-                        markers = [];
+                // Convert duration to half-hour intervals and handle overflow
+                let intervals = [];
+                const daysOfWeek = ['M', 'TU', 'W', 'TH', 'F', 'SA', 'SU'];
+                let dayIndex = daysOfWeek.indexOf(day);
 
-                        buildings.forEach(building => {
-                            building.properties.rooms = data[building.properties.name] || [];
-                            building.properties.numRooms = building.properties.rooms.length;
+                for (let i = 0; i < duration * 2; i++) {
+                    let intervalTime = time + (i * 0.5);
+                    let intervalDay = day;
 
-                            const label = L.marker(building.properties.center, {
-                                icon: L.divIcon({
-                                    className: 'label',
-                                    html: `<div class="label-text">${building.properties.numRooms}</div>`,
-                                    iconSize: [0, 0]
-                                })
-                            }).addTo(map);
+                    if (intervalTime >= 24) {
+                        intervalTime -= 24;
+                        dayIndex = (dayIndex + 1) % 7;
+                        intervalDay = daysOfWeek[dayIndex];
+                    }
 
-                            updateLabelFontSize(label);
+                    intervals.push({ day: intervalDay, time: intervalTime });
+                }
 
-                            const labelTextElement = label.getElement().querySelector('.label-text');
-                            labelTextElement.style.pointerEvents = 'none';
+                console.log(`Fetching data for intervals:`, intervals); // Debugging line
 
-                            label.on('add', function() {
-                                updateLabelFontSize(label);
-                            });
+                let availableRooms = {};
+                let roomAvailability = {};
 
-                            markers.push(label);
-                        });
-
-                        map.on('zoom', function() {
-                            markers.forEach(marker => updateLabelFontSize(marker));
-                        });
-
-                        geojson = L.geoJson(buildings, {
-                            style: function (feature) {
-                                const availableRooms = feature.properties.numRooms || 0;
-                                const fillColor = calculateFillColor(availableRooms);
-
-                                return {
-                                    fillColor: fillColor,
-                                    color: borderColor,
-                                    weight: 2,
-                                    opacity: 1,
-                                    fillOpacity: 0.4
-                                };
-                            },
-                            onEachFeature: onEachFeature
-                        }).addTo(map);
-
-                        function calculateFillColor(availableRooms) {
-                            const proportion = Math.min(availableRooms / 10, 1);
-                            let red, green, blue;
-                            if (proportion < 0.5) {
-                                red = 255;
-                                green = Math.round(proportion * 2 * 255);
-                            } else {
-                                red = Math.round((1 - proportion) * 2 * 255);
-                                green = 255;
+                // Initialize room availability for each interval
+                intervals.forEach(interval => {
+                    let matchedData = data.find(entry => entry.day === interval.day && entry.time === interval.time);
+                    if (matchedData) {
+                        Object.keys(matchedData.data).forEach(building => {
+                            if (!roomAvailability[building]) {
+                                roomAvailability[building] = {};
                             }
-                            blue = 0;
-                            return `rgba(${red}, ${green}, ${blue}, 0.8)`;
+                            matchedData.data[building].forEach(room => {
+                                if (!roomAvailability[building][room]) {
+                                    roomAvailability[building][room] = 0;
+                                }
+                                roomAvailability[building][room]++;
+                            });
+                        });
+                    }
+                });
+
+                // Filter rooms that are available for all intervals
+                Object.keys(roomAvailability).forEach(building => {
+                    Object.keys(roomAvailability[building]).forEach(room => {
+                        if (roomAvailability[building][room] === intervals.length) {
+                            if (!availableRooms[building]) {
+                                availableRooms[building] = [];
+                            }
+                            availableRooms[building].push(room);
                         }
-                    })
-                    .catch(error => console.error('Error:', error));
+                    });
+                });
+
+                console.log('Available rooms:', availableRooms); // Debugging line
+            
+                if (geojson) {
+                    map.removeLayer(geojson);
+                }
+                markers.forEach(marker => map.removeLayer(marker));
+                markers = [];
+
+                buildings.forEach(building => {
+                    building.properties.rooms = availableRooms[building.properties.name] || [];
+                    building.properties.numRooms = building.properties.rooms.length;
+
+                    const label = L.marker(building.properties.center, {
+                        icon: L.divIcon({
+                            className: 'label',
+                            html: `<div class="label-text">${building.properties.numRooms}</div>`,
+                            iconSize: [0, 0]
+                        })
+                    }).addTo(map);
+
+                    updateLabelFontSize(label);
+
+                    const labelTextElement = label.getElement().querySelector('.label-text');
+                    labelTextElement.style.pointerEvents = 'none';
+
+                    label.on('add', function() {
+                        updateLabelFontSize(label);
+                    });
+
+                    markers.push(label);
+                });
+
+                map.on('zoom', function() {
+                    markers.forEach(marker => updateLabelFontSize(marker));
+                });
+
+                geojson = L.geoJson(buildings, {
+                    style: function (feature) {
+                        const availableRooms = feature.properties.numRooms || 0;
+                        const fillColor = calculateFillColor(availableRooms);
+
+                        return {
+                            fillColor: fillColor,
+                            color: borderColor,
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.4
+                        };
+                    },
+                    onEachFeature: onEachFeature
+                }).addTo(map);
+
+                function calculateFillColor(availableRooms) {
+                    const proportion = Math.min(availableRooms / 10, 1);
+                    let red, green, blue;
+                    if (proportion < 0.5) {
+                        red = 255;
+                        green = Math.round(proportion * 2 * 255);
+                    } else {
+                        red = Math.round((1 - proportion) * 2 * 255);
+                        green = 255;
+                    }
+                    blue = 0;
+                    return `rgba(${red}, ${green}, ${blue}, 0.8)`;
+                }
             }
+
 
             const toggleControl = L.Control.extend({
                 options: {
