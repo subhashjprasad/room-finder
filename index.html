@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Room Finder</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="{{ url_for('static', filename='buildings.js') }}"></script>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/buildings.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="map"></div>
     <script>
         async function initializeMap() {
-            const response = await fetch('/api/token');
-            const data = await response.json();
-            const accessToken = data.accessToken;
+            // const response = await fetch('/api/token');
+            // const data = await response.json();
+            const accessToken = "pk.eyJ1Ijoic3ViaGFzaGpwcmFzYWQiLCJhIjoiY2x3Ymg1ZWNhMG5jZTJtbzB6ZWhncm5udyJ9.MavuHjcJJ-oXI09j5_fzOQ";
 
             const map = L.map('map', { zoomControl: false, doubleClickZoom: false }).setView([37.8719, -122.2585], 17);
 
