@@ -198,8 +198,6 @@
                     intervals.push({ day: intervalDay, time: intervalTime });
                 }
 
-                console.log(`Fetching data for intervals:`, intervals); // Debugging line
-
                 let availableRooms = {};
                 let roomAvailability = {};
 
@@ -232,8 +230,6 @@
                         }
                     });
                 });
-
-                console.log('Available rooms:', availableRooms); // Debugging line
             
                 if (geojson) {
                     map.removeLayer(geojson);
