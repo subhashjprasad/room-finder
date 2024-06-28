@@ -171,8 +171,4 @@ html, body {
     .duration-input {
         width: 100px; /* Increase width for duration input */
     }
-
-    .current-time-div .current-checkbox {
-        transform: scale(2); /* Increase size of checkbox */
-    }
 }
