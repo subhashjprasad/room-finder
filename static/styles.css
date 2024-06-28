@@ -156,14 +156,14 @@ html, body {
 
 @media (max-aspect-ratio: 1/1) {
     .info, .leaflet-control-custom, .control-box {
-        font-size: 18pt; /* Larger font size for taller screens */
+        font-size: 65pt; /* Larger font size for taller screens */
     }
 
     .control-box select, .control-box input, .control-box button {
-        padding: 10px; /* Increase padding for inputs and buttons */
+        padding: 100px; /* Increase padding for inputs and buttons */
     }
 
     .control-box .duration-input {
-        width: 50px; /* Increase width for duration input */
+        width: 500px; /* Increase width for duration input */
     }
 }
