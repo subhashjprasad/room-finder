@@ -149,3 +149,21 @@ html, body {
     width: auto;
     transform: scale(1.5);
 }
+
+.info, .leaflet-control-custom, .control-box {
+    font-size: 12pt;
+}
+
+@media (max-aspect-ratio: 1/1) {
+    .info, .leaflet-control-custom, .control-box {
+        font-size: 18px; /* Larger font size for taller screens */
+    }
+
+    .control-box select, .control-box input, .control-box button {
+        padding: 10px; /* Increase padding for inputs and buttons */
+    }
+
+    .control-box .duration-input {
+        width: 50px; /* Increase width for duration input */
+    }
+}
