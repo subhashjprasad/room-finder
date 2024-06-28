@@ -156,7 +156,7 @@ html, body {
 
 @media (max-aspect-ratio: 1/1) {
     .info, .leaflet-control-custom, .control-box {
-        font-size: 18px; /* Larger font size for taller screens */
+        font-size: 18pt; /* Larger font size for taller screens */
     }
 
     .control-box select, .control-box input, .control-box button {
