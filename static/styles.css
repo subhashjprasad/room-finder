@@ -173,6 +173,6 @@ html, body {
     }
 
     .current-time-div .current-checkbox {
-        transform: scale(9); /* Increase size of checkbox */
+        transform: scale(2); /* Increase size of checkbox */
     }
 }
