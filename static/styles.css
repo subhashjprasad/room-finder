@@ -171,4 +171,9 @@ html, body {
     .duration-input {
         width: 100px; /* Increase width for duration input */
     }
+
+    .current-time-div .current-checkbox {
+        margin-right: 16px;
+        margin-top: 8px;
+    }
 }
