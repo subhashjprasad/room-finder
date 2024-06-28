@@ -150,20 +150,29 @@ html, body {
     transform: scale(1.5);
 }
 
-.info, .leaflet-control-custom, .control-box {
+/* .info, .leaflet-control-custom, .control-box {
     font-size: 12pt;
-}
+} */
 
 @media (max-aspect-ratio: 1/1) {
     .info, .leaflet-control-custom, .control-box {
-        font-size: 65pt; /* Larger font size for taller screens */
+        font-size: 22pt; /* Larger font size for taller screens */
     }
 
-    .control-box select, .control-box input, .control-box button {
-        padding: 100px; /* Increase padding for inputs and buttons */
+    .control-box label,
+    .control-box select,
+    .control-box input,
+    .control-box button,
+    .leaflet-control-custom .leaflet-bar-custom-button {
+        font-size: 22pt; /* Larger font size for elements inside control boxes */
+        padding: 10px; /* Increase padding for better touch interaction */
     }
 
-    .control-box .duration-input {
-        width: 500px; /* Increase width for duration input */
+    .duration-input {
+        width: 100px; /* Increase width for duration input */
+    }
+
+    .current-time-div .current-checkbox {
+        transform: scale(9); /* Increase size of checkbox */
     }
 }
