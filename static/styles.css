@@ -9,7 +9,13 @@ html, body {
     height: 100%;
     width: 100%;
     cursor: pointer;
+    background-color: white;
 }
+
+.leaflet-container {
+    background: none;
+}
+
 
 .info {
     padding: 10px 12px;
