@@ -40,11 +40,19 @@
                     currentTileLayer = 'light';
                     borderColor = '#444';
                     borderColorHover = '#000';
+                    document.querySelectorAll('.leaflet-tile').forEach(tile => {
+                        tile.classList.remove('dark');
+                        tile.classList.add('light');
+                    });
                 } else {
                     tileLayer.setUrl(`https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`);
                     currentTileLayer = 'dark';
                     borderColor = '#bbb';
                     borderColorHover = '#fff';
+                    document.querySelectorAll('.leaflet-tile').forEach(tile => {
+                        tile.classList.remove('light');
+                        tile.classList.add('dark');
+                    });
                 }
 
                 map.eachLayer(function(layer) {

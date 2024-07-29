@@ -16,6 +16,13 @@ html, body {
     background: none;
 }
 
+.leaflet-tile.light {
+    background: #ddd;
+}
+
+.leaflet-tile.dark {
+    background: #333;
+}
 
 .info {
     padding: 10px 12px;
