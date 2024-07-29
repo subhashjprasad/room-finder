@@ -17,11 +17,11 @@ html, body {
 }
 
 .leaflet-tile.light {
-    background: #ff0000;
+    background: #000000;
 }
 
 .leaflet-tile.dark {
-    background: #000000;
+    background: #787878;
 }
 
 .info {
