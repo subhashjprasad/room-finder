@@ -16,12 +16,14 @@ html, body {
     background: none;
 }
 
-.leaflet-tile.light {
-    background: #ddd;
+.leaflet-tile {
+    background-color: transparent !important;
 }
-
-.leaflet-tile.dark {
-    background: #003cff;
+.light {
+    background: #ddd !important;
+}
+.dark {
+    background: #003cff !important;
 }
 
 .info {

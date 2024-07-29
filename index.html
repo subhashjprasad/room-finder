@@ -62,7 +62,7 @@
                         tile.classList.add('dark');
                     });
                 }
-
+                updateTileBackgrounds();
                 map.eachLayer(function(layer) {
                     if (layer instanceof L.Marker) {
                         updateLabelFontSize(layer);
