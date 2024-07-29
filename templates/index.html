@@ -13,13 +13,9 @@
     <div id="map"></div>
     <script>
         async function initializeMap() {
-            // const response = await fetch('/api/token');
-            // const data = await response.json();
-            const accessToken = "pk.eyJ1Ijoic3ViaGFzaGpwcmFzYWQiLCJhIjoiY2x3Ymg1ZWNhMG5jZTJtbzB6ZWhncm5udyJ9.MavuHjcJJ-oXI09j5_fzOQ";
+            const accessToken = "pk.eyJ1Ijoic3ViaGFzaGpwcmFzYWQiLCJhIjoiY2x3YmgzNXc2MDN5bjJrcG5ncWFhazRoMSJ9.1ooSMBkSVBY6daKYb3WVmw";
 
             const map = L.map('map', { zoomControl: false, doubleClickZoom: false }).setView([37.8719, -122.2585], 17);
-
-            // let coordinates = "";
 
             // map.on('click', function (e) {
             //     coordinates += '[' + e.latlng.lng + ', ' + e.latlng.lat + '],\n';
@@ -31,8 +27,8 @@
             let borderColorHover = '#000';
             let highlightedLayer = null;
             let permanentlyHighlightedLayer = null;
-            let geojson = null; // Declare the geojson variable here
-            let markers = []; // Array to keep track of label markers
+            let geojson = null;
+            let markers = [];
 
             function updateTileBackgrounds() {
                 const tiles = document.querySelectorAll('.leaflet-tile');
@@ -44,7 +40,7 @@
 
             function toggleTileLayer() {
                 if (currentTileLayer === 'dark') {
-                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/subhashjprasad/clz7amqwi00r201r58css0qzr/tiles/{z}/{x}/{y}@2x?access_token=${accessToken}`);
+                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`);
                     currentTileLayer = 'light';
                     borderColor = '#444';
                     borderColorHover = '#000';
@@ -53,7 +49,7 @@
                         tile.classList.add('light');
                     });
                 } else {
-                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/subhashjprasad/clz7amqwi00r201r58css0qzr/tiles/{z}/{x}/{y}@2x?access_token=${accessToken}`);
+                    tileLayer.setUrl(`https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`);
                     currentTileLayer = 'dark';
                     borderColor = '#bbb';
                     borderColorHover = '#fff';
@@ -97,7 +93,7 @@
                 label.style.marginTop = `${(markerHeight - labelHeight) / 2}px`;
             }
 
-            let tileLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/subhashjprasad/clz7amqwi00r201r58css0qzr/tiles/{z}/{x}/{y}@2x?access_token=${accessToken}`, {
+            let tileLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
                 attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
                     'Imagery &copy; <a href="https://www.mapbox.com/">Mapbox</a>, ' + 'Developed by <a href="https://www.linkedin.com/in/subhash-j-prasad/">Subhash Prasad</a>',
                 maxZoom: 25,
