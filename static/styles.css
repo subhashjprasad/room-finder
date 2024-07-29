@@ -18,10 +18,6 @@ html, body {
 
 .leaflet-tile {
     background-color: transparent !important;
-    z-index: 1;
-}
-.leaflet-overlay-pane, .leaflet-marker-pane, .leaflet-shadow-pane {
-    z-index: 2; /* Ensure other elements have a higher z-index */
 }
 .light {
     background: #ddd !important;
