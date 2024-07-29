@@ -17,7 +17,7 @@ html, body {
 }
 
 .leaflet-tile.light {
-    background: #ddd;
+    background: #ff0000;
 }
 
 .leaflet-tile.dark {
