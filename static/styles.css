@@ -21,7 +21,7 @@ html, body {
 }
 
 .leaflet-tile.dark {
-    background: #333;
+    background: #000000;
 }
 
 .info {
