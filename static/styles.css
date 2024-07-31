@@ -1,194 +1,133 @@
-html, body {
-    height: 100%;
+body {
     margin: 0;
     padding: 0;
-    font-family: 'Crimson Pro', serif;
 }
-
 #map {
-    height: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
     width: 100%;
-    cursor: pointer;
-    background-color: white;
 }
 
-.leaflet-container {
-    background: none;
-}
-
-.leaflet-tile {
-    background-color: transparent !important;
-}
-.light {
-    background: #ddd !important;
-}
-.dark {
-    background: #333 !important;
-}
-
-.info {
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    font-size: 12pt;
-    font-family: 'Crimson Pro', serif;
-}
-
-.info h4, .info b {
-    margin-top: 5px;
-}
-
-.leaflet-top.leaflet-left {
-    padding: 0;
-}
-
-/* Adjust the leaflet control button styles */
-.leaflet-control-custom .leaflet-bar-custom-button {
-    background: rgba(255, 255, 255, 0.5); /* transparent background */
-    color: rgba(0, 0, 0, 1); /* opaque text color */
+#infoPanel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 150px; /* Fixed width */
+    min-height: 60px; /* Minimum height */
+    background-color: rgba(255, 255, 255, 0.5);;
     padding: 10px;
+    padding-top: 20px;
     border: none;
-    border-radius: 5px;
-    cursor: pointer; /* Optional: to change cursor on hover */
-    font-size: 12pt;
+    overflow: auto; /* Enable scrolling if needed */
+    border-radius: 5px; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     font-family: 'Crimson Pro', serif;
 }
 
-/* Adjust hover opacity for leaflet control buttons */
-.leaflet-control-custom .leaflet-bar-custom-button:hover {
-    background: rgba(255, 255, 255, 0.7); /* slightly less transparent on hover */
-}
-
-.label {
-    text-align: center;
-    font-size: 10pt;
-    color: black;
-    font-family: 'Crimson Pro', serif;
-}
-
-.label-text {
-    background: none;
-    padding: none;
-    border-radius: 3px;
+#infoTitle {
     font-weight: bold;
 }
 
-.control-box {
-    background: rgba(255, 255, 255, 0.5);
-    padding: 10px;
-    border-radius: 15px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-    font-family: 'Crimson Pro', serif;
+#infoContentTitle {
+    line-height: 1.5;
 }
 
-.control-box label {
+#infoContent {
+    white-space: pre-wrap; /* Preserve whitespace and enable text wrapping */
+    line-height: 1.5;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+#leftPanel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.5); /* Slightly transparent */
+    border-radius: 5px;
+    padding: 15px;
+    font-family: 'Crimson Pro', serif;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    width: 250px; /* Adjust as needed */
+}
+
+.panel-section {
+    margin-bottom: 15px;
+}
+
+.panel-section label {
     display: block;
     margin-bottom: 5px;
-    color: black;
-    font-size: 12pt;
+    padding-bottom: 5px;
 }
 
-.control-box select,
-.control-box input {
-    width: calc(100% - 20px);
-    margin-bottom: 10px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
+.panel-section select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
     font-family: 'Crimson Pro', serif;
 }
 
-.duration-control {
+.time-selectors {
     display: flex;
-    justify-content: space-between;
+    gap: 5px;
+}
+
+.time-selectors select {
+    flex: 1; /* Allow each dropdown to grow */
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-family: 'Crimson Pro', serif;
+}
+
+.duration-controls {
+    display: flex;
     align-items: center;
 }
 
-.duration-input {
-    flex: 1;
-    margin-right: 5px;
-}
-
-.duration-button {
-    background: none; /* transparent background */
-    color: rgba(0, 0, 0, 1); /* opaque text color */
+#decrementButton, #incrementButton {
+    width: 30px;
+    height: 30px;
     border: none;
+    background-color: transparent;
+    cursor: pointer;
     border-radius: 5px;
-    cursor: pointer; /* Optional: to change cursor on hover */
-    font-size: 12pt;
     font-family: 'Crimson Pro', serif;
-    padding: 3px 10px 7px 10px;
-    margin-bottom: 10px;
 }
 
-.time-div {
+#durationBox {
+    width: 60px; /* Adjust width as needed */
+    text-align: center;
+    margin: 0px;
+    font-size: 14px;
+    font-family: 'Crimson Pro', serif;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #fff; /* Background color to match dropdowns */
+}
+
+.checkbox-container {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 15px; /* Adjust spacing as needed */
 }
 
-.hour-select,
-.minute-select,
-.ampm-select {
-    flex: 1;
-    margin-right: 5px;
-    width: auto; /* Adjust the width as needed */
+.checkbox-container input[type="checkbox"] {
+    width: 16px;  /* Adjust size as needed */
+    height: 16px; /* Adjust size as needed */
+    -webkit-transform: scale(1.5); /* For a slightly larger checkbox */
+    transform: scale(1.5);         /* For a slightly larger checkbox */
+    margin-left: 100px;
+    margin-top: 5px;
 }
 
-.day-select {
-    width: 201px !important;
-}
-
-.leaflet-top.leaflet-left .control-box {
-    border-radius: 7px;
-}
-
-.current-time-div {
-    display: flex;
-    flex-wrap: nowrap;
-    margin-bottom: 0px;
-    justify-content: flex-end;
-}
-
-.current-time-div .control-label {
-    flex: 1;
-    width: auto; /* Adjust the width as needed */
-    padding: 0;
-    white-space: nowrap;
-}
-
-.current-time-div .current-checkbox {
-    margin: 0;
-    margin-right: 8px;
-    padding: 0;
-    width: auto;
-    transform: scale(1.5);
-}
-
-/* .info, .leaflet-control-custom, .control-box {
-    font-size: 12pt;
-} */
-
-@media (max-aspect-ratio: 1/1) {
-    .info, .leaflet-control-custom, .control-box {
-        font-size: 22pt; /* Larger font size for taller screens */
-    }
-
-    .control-box label,
-    .control-box select,
-    .control-box input,
-    .control-box button,
-    .leaflet-control-custom .leaflet-bar-custom-button {
-        font-size: 22pt; /* Larger font size for elements inside control boxes */
-        padding: 10px; /* Increase padding for better touch interaction */
-    }
-
-    .duration-input {
-        width: 100px; /* Increase width for duration input */
-    }
-
-    .current-time-div .current-checkbox {
-        margin-right: 16px;
-        margin-top: 8px;
-    }
+.checkbox-container label {
+    font-family: 'Crimson Pro', serif;
+    font-size: 16px;
 }

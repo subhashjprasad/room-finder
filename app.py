@@ -17,15 +17,15 @@ uri = os.environ.get("MONGODB_URI")
 if not uri:
     raise ValueError("No MONGODB_URI environment variable set.")
 
-client = MongoClient(uri)
+# client = MongoClient(uri)
 
-try:
-    client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
+# try:
+#     client.admin.command('ping')
+#     print("Pinged your deployment. You successfully connected to MongoDB!")
+# except Exception as e:
+#     print(e)
 
-db = client['dayTime_database']
+# db = client['dayTime_database']
 
 day_to_number = {"M": 1, "TU": 2, "W": 3, "TH": 4, "F": 5, "SA": 6, "SU": 7}
 
@@ -49,33 +49,33 @@ def combine_common_values(dicts):
 
     return combined_dict
 
-@app.route('/api/available_rooms', methods=['GET'])
-def get_available_rooms():
-    day = request.args.get('day')
-    time = float(request.args.get('time'))
-    duration = float(request.args.get('duration'))
+# @app.route('/api/available_rooms', methods=['GET'])
+# def get_available_rooms():
+#     day = request.args.get('day')
+#     time = float(request.args.get('time'))
+#     duration = float(request.args.get('duration'))
 
-    end_time = time + duration
+#     end_time = time + duration
 
-    collection = db['dayTime_collection']
+#     collection = db['dayTime_collection']
 
-    all_available_rooms_by_building = []
-    while time < end_time:
-        available_rooms_by_building = {}
+#     all_available_rooms_by_building = []
+#     while time < end_time:
+#         available_rooms_by_building = {}
 
-        query = {
-            "day": day,
-            "time": time
-        }
+#         query = {
+#             "day": day,
+#             "time": time
+#         }
 
-        document = collection.find_one(query)
+#         document = collection.find_one(query)
 
-        if document:
-            all_available_rooms_by_building.append(document.get('data', {}))
+#         if document:
+#             all_available_rooms_by_building.append(document.get('data', {}))
 
-        time += 0.5
+#         time += 0.5
 
-    return jsonify(combine_common_values(all_available_rooms_by_building))
+#     return jsonify(combine_common_values(all_available_rooms_by_building))
 
 @app.route('/')
 def index():
