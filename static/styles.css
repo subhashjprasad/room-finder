@@ -131,3 +131,50 @@ body {
     font-family: 'Crimson Pro', serif;
     font-size: 16px;
 }
+
+@media (max-width: 600px) {
+    #infoPanel {
+        padding: 5px;
+        font-size: 13px;
+        max-width: 150px;
+        min-height: 40px;
+        width: 120px;
+    }
+
+    #leftPanel {
+        padding: 5px;
+        font-size: 13px;
+        max-width: 200px;
+    }
+
+    .checkbox-container label {
+        font-family: 'Crimson Pro', serif;
+        font-size: 13px;
+    }
+    
+    .checkbox-label input {
+        transform: scale(1.2);
+        margin-left: 10px;
+    }
+
+    .time-selectors select {
+        font-size: 13px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        width: 14px;  /* Adjust size as needed */
+        height: 14px; /* Adjust size as needed */
+        -webkit-transform: scale(1.3); /* For a slightly larger checkbox */
+        transform: scale(1.3);         /* For a slightly larger checkbox */
+        margin-left: 80px;
+        margin-top: 5px;
+    }
+
+    #durationBox {
+        font-size: 13px;
+    }
+
+    #dayDropdown {
+        font-size: 13px;
+    }
+}

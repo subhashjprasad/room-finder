@@ -105,16 +105,18 @@
                 this._map = map;
                 this._container = document.createElement('div');
                 this._container.className = 'mapboxgl-ctrl';
-                this._container.innerHTML = 'Developed by Subhash Prasad'; // Replace <your name> with your actual name
+                this._container.innerHTML = 'Developed by Subhash Prasad';
                 this._container.style.cssText = `
-                    background-color: rgba(255, 255, 255, 0.5);
-                    color: rgba(50, 50, 50);
+                    background-color: rgba(255, 255, 255, 1);
+                    color: rgba(0, 0, 0);
                     padding: 5px;
                     font-size: 12px;
                     position: absolute;
-                    bottom: 10px;
-                    right: -10px;
+                    border-radius: 5px;
+                    bottom: -8px;
+                    left: -8px;
                     z-index: 1;
+                    width: 170px;
                 `;
                 return this._container;
             }
@@ -126,7 +128,7 @@
         }
 
         map.on('load', function () {
-            map.addControl(new CreditsControl(), 'bottom-right');
+            map.addControl(new CreditsControl(), 'bottom-left');
             map.doubleClickZoom.disable();
 
             // Add a source for the bounding boxes.
