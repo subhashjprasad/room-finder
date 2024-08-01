@@ -5072,6 +5072,13 @@
             function updateBuildingInfo(feature) {
                 const building = feature.properties.name;
                 const rooms = JSON.parse(feature.properties.rooms);
+
+                rooms.sort((a, b) => {
+                    const numA = parseInt(a.match(/\d+/)[0], 10);
+                    const numB = parseInt(b.match(/\d+/)[0], 10);
+                    return numA - numB;
+                });
+
                 document.getElementById('infoContentTitle').textContent = building;
                 document.getElementById('infoContentTitle').classList.add('bold');
                 document.getElementById('infoContent').innerHTML = `${rooms.join('<br>')}`;
