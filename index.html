@@ -38,7 +38,6 @@
             <label>Time:</label>
             <div class="time-selectors">
                 <select id="hourDropdown">
-                    <!-- Hours from 1 to 12 -->
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
@@ -85,13 +84,13 @@
         let styleUrl;
 
         if (hours >= 20 || hours < 6) {
-            styleUrl = nightStyle; // Night time
+            styleUrl = nightStyle;
         } else if (hours >= 18 && hours < 20) {
-            styleUrl = duskStyle; // Dusk
+            styleUrl = duskStyle;
         } else if (hours >= 6 && hours < 8) {
-            styleUrl = dawnStyle; // Dawn
+            styleUrl = dawnStyle;
         } else {
-            styleUrl = dayStyle; // Day time
+            styleUrl = dayStyle;
         }
         const map = new mapboxgl.Map({
             container: 'map',
@@ -131,7 +130,6 @@
             map.addControl(new CreditsControl(), 'bottom-left');
             map.doubleClickZoom.disable();
 
-            // Add a source for the bounding boxes.
             map.addSource('boundingBoxes', {
                 'type': 'geojson',
                 'data': {
@@ -4891,7 +4889,6 @@
                 }
             });
 
-            // Add a 3D layer to use the bounding box source.
             map.addLayer({
                 'id': 'boundingBoxes',
                 'type': 'fill-extrusion',
@@ -4904,13 +4901,12 @@
                         5, '#FFFF00',
                         10, '#00FF00'
                     ],
-                    'fill-extrusion-height': 50, // Adjust height as needed
+                    'fill-extrusion-height': 50,
                     'fill-extrusion-opacity': 0.5,
                     'fill-extrusion-emissive-strength': 0.5
                 }
             });
 
-            // Add a symbol layer for the label.
             map.addSource('boundingBoxLabels', {
                 'type': 'geojson',
                 'data': {
@@ -4966,11 +4962,9 @@
                     map.setPaintProperty('boundingBoxLabels', 'text-color', '#000000');
                 }
 
-                // Fetch the data from data.json
                 let response = await fetch('/static/data.json');
                 let data = await response.json();
 
-                // Convert duration to half-hour intervals and handle overflow
                 let intervals = [];
                 const daysOfWeek = ['M', 'TU', 'W', 'TH', 'F', 'SA', 'SU'];
                 let dayIndex = daysOfWeek.indexOf(day);
@@ -4991,7 +4985,6 @@
                 let availableRooms = {};
                 let roomAvailability = {};
 
-                // Initialize room availability for each interval
                 intervals.forEach(interval => {
                     let matchedData = data.find(entry => entry.day === interval.day && entry.time === interval.time);
                     if (matchedData) {
@@ -5014,15 +5007,13 @@
 
                 let boundingBoxData = {
                     "type": "FeatureCollection",
-                    "features": [] // Initialize with an empty array
+                    "features": []
                 };
 
-                // Filter rooms that are available for all intervals
                 Object.keys(availableRooms).forEach(building => {
                     let totalRooms = availableRooms[building].size;
                     availableRooms[building] = Array.from(availableRooms[building]);
 
-                    // Update the bounding box features with the number of rooms
                     const boundingBoxSource = map.getSource('boundingBoxes');
                     if (boundingBoxSource) {
                         boundingBoxData = boundingBoxSource._data || {
@@ -5037,12 +5028,10 @@
                             }
                         });
 
-                        // Update the boundingBoxes source with new data
                         boundingBoxSource.setData(boundingBoxData);
                     }
                 });
 
-                // Update the source for the center symbols
                 const centerFeatures = boundingBoxData.features.map(feature => ({
                     type: 'Feature',
                     properties: {
@@ -5058,14 +5047,12 @@
                     }
                 }));
 
-                // Update the source for the center symbols
                 map.getSource('boundingBoxLabels').setData({
                     type: 'FeatureCollection',
                     features: centerFeatures
                 });
             }
 
-            // Store the currently hovered and clicked feature IDs
             let hoveredId = null;
             let clickedId = null;
 
@@ -5108,7 +5095,6 @@
                 ]);
             }
 
-            // Handle hover and click events
             map.on('mousemove', 'boundingBoxes', function (e) {
                 const features = map.queryRenderedFeatures(e.point, { layers: ['boundingBoxes'] });
 
@@ -5129,7 +5115,6 @@
                     updateBoundingBoxColors();
                     resetBuildingInfo();
                 } else {
-                    // If a building is clicked, ensure the clicked building stays highlighted
                     const clickedFeature = map.queryRenderedFeatures({ layers: ['boundingBoxes'] }).find(f => f.properties.id === clickedId);
                     if (clickedFeature) {
                         hoveredId = null;
@@ -5146,7 +5131,7 @@
                 if (features.length > 0) {
                     const feature = features[0];
                     clickedId = feature.properties.id;
-                    hoveredId = null; // Reset hoveredId on click
+                    hoveredId = null;
 
                     const centerArray = JSON.parse(feature.properties.center);
                     map.flyTo({ center: [centerArray[1] + 0.00003, centerArray[0]], zoom: 17.5 });
@@ -5156,7 +5141,7 @@
                 }
             });
 
-            // Click event to detect clicks on empty space
+            // Handling click on empty space
             map.on('click', function (e) {
                 const features = map.queryRenderedFeatures(e.point, { layers: ['boundingBoxes'] });
 
@@ -5169,9 +5154,8 @@
             });
 
 
-            // Extract center coordinates and update the symbols layer
             const boundingBoxesSource = map.getSource('boundingBoxes');
-            const boundingBoxesData = boundingBoxesSource._data; // This is a direct access to internal data
+            const boundingBoxesData = boundingBoxesSource._data;
             const centerFeatures = boundingBoxesData.features.map(feature => ({
                 type: 'Feature',
                 properties: {
@@ -5187,7 +5171,6 @@
                 }
             }));
 
-            // Update the source for the center symbols
             map.getSource('boundingBoxLabels').setData({
                 type: 'FeatureCollection',
                 features: centerFeatures
@@ -5235,7 +5218,7 @@
             document.getElementById('decrementButton').addEventListener('click', function() {
                 let durationBox = document.getElementById('durationBox');
                 let currentValue = parseFloat(durationBox.textContent);
-                if (currentValue > 0.5) { // Ensure duration does not go below 0.5
+                if (currentValue > 0.5) {
                     durationBox.textContent = (currentValue - 0.5).toFixed(1);
                 }
                 fetchAndUpdateData();
@@ -5249,38 +5232,32 @@
                 const ampmDropdown = document.getElementById('ampmDropdown');
                 
                 if (isChecked) {
-                    // Get current time
                     const now = new Date();
                     const currentDay = dayMapping[now.toLocaleDateString('en-US', { weekday: 'long' })] || 'M';
                     const currentHour = now.getHours() % 12 || 12;
                     const currentMinute = now.getMinutes() < 30 ? '00' : '30';
                     const currentAmpm = now.getHours() >= 12 ? 'PM' : 'AM';
                     
-                    // Set dropdown values
                     dayDropdown.value = currentDay;
                     hourDropdown.value = currentHour;
                     minuteDropdown.value = currentMinute;
                     ampmDropdown.value = currentAmpm;
                     
-                    // Disable dropdowns
                     dayDropdown.disabled = true;
                     hourDropdown.disabled = true;
                     minuteDropdown.disabled = true;
                     ampmDropdown.disabled = true;
                     
-                    // Gray out dropdowns
                     dayDropdown.style.backgroundColor = '#e0e0e0';
                     hourDropdown.style.backgroundColor = '#e0e0e0';
                     minuteDropdown.style.backgroundColor = '#e0e0e0';
                     ampmDropdown.style.backgroundColor = '#e0e0e0';
                 } else {
-                    // Enable dropdowns
                     dayDropdown.disabled = false;
                     hourDropdown.disabled = false;
                     minuteDropdown.disabled = false;
                     ampmDropdown.disabled = false;
                     
-                    // Reset background color
                     dayDropdown.style.backgroundColor = '#fff';
                     hourDropdown.style.backgroundColor = '#fff';
                     minuteDropdown.style.backgroundColor = '#fff';
@@ -5294,26 +5271,22 @@
             const minuteDropdown = document.getElementById('minuteDropdown');
             const ampmDropdown = document.getElementById('ampmDropdown');
 
-            // Get current time
             const now = new Date();
             const currentDay = dayMapping[now.toLocaleDateString('en-US', { weekday: 'long' })] || 'M';
             const currentHour = now.getHours() % 12 || 12;
             const currentMinute = now.getMinutes() < 30 ? '00' : '30';
             const currentAmpm = now.getHours() >= 12 ? 'PM' : 'AM';
             
-            // Set dropdown values
             dayDropdown.value = currentDay;
             hourDropdown.value = currentHour;
             minuteDropdown.value = currentMinute;
             ampmDropdown.value = currentAmpm;
             
-            // Disable dropdowns
             dayDropdown.disabled = true;
             hourDropdown.disabled = true;
             minuteDropdown.disabled = true;
             ampmDropdown.disabled = true;
             
-            // Gray out dropdowns
             dayDropdown.style.backgroundColor = '#e0e0e0';
             hourDropdown.style.backgroundColor = '#e0e0e0';
             minuteDropdown.style.backgroundColor = '#e0e0e0';
