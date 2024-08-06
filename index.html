@@ -932,62 +932,6 @@
                             {
                             "type": "Feature",
                             "properties": {
-                                "id": "2251College",
-                                "name": "2251 College",
-                                "rooms": 0,
-                                "numRooms": 0,
-                                "center": [
-                                37.87020833916068,
-                                -122.25387654165033
-                                ]
-                            },
-                            "geometry": {
-                                "type": "Polygon",
-                                "coordinates": [
-                                [
-                                    [
-                                    -122.2539728182893,
-                                    37.87007823732204
-                                    ],
-                                    [
-                                    -122.25379562583973,
-                                    37.87008864160864
-                                    ],
-                                    [
-                                    -122.25379780452572,
-                                    37.87011179193526
-                                    ],
-                                    [
-                                    -122.25369909329042,
-                                    37.87011748030011
-                                    ],
-                                    [
-                                    -122.25371652188866,
-                                    37.870303115386136
-                                    ],
-                                    [
-                                    -122.25380858890453,
-                                    37.87029837021994
-                                    ],
-                                    [
-                                    -122.25381194072915,
-                                    37.87032006532165
-                                    ],
-                                    [
-                                    -122.25399528553633,
-                                    37.87030868862279
-                                    ],
-                                    [
-                                    -122.2539728182893,
-                                    37.87007823732204
-                                    ]
-                                ]
-                                ]
-                            }
-                            },
-                            {
-                            "type": "Feature",
-                            "properties": {
                                 "id": "cheit",
                                 "name": "Cheit",
                                 "rooms": 0,
@@ -5061,9 +5005,23 @@
                 const rooms = JSON.parse(feature.properties.rooms);
 
                 rooms.sort((a, b) => {
-                    const numA = parseInt(a.match(/\d+/)[0], 10);
-                    const numB = parseInt(b.match(/\d+/)[0], 10);
-                    return numA - numB;
+                    const matchA = a.match(/\d+/);
+                    const matchB = b.match(/\d+/);
+
+                    if (matchA && matchB) {
+                        const numA = parseInt(matchA[0], 10);
+                        const numB = parseInt(matchB[0], 10);
+                        return numA - numB;
+                    }
+                    
+                    if (matchA) {
+                        return -1;
+                    }
+                    if (matchB) {
+                        return 1;
+                    }
+                    
+                    return a.localeCompare(b);
                 });
 
                 document.getElementById('infoContentTitle').textContent = building;
@@ -5103,6 +5061,7 @@
                     if (hoveredId !== feature.properties.id) {
                         hoveredId = feature.properties.id;
                         updateBoundingBoxColors();
+                        console.log(feature);
                         updateBuildingInfo(feature);
                     }
                 }
