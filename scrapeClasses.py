@@ -222,8 +222,8 @@ def get_class_information(url):
 
 
 next_page = "https://classes.berkeley.edu/search/class?f%5B0%5D=im_field_term_name%3A3151"
-page_limit = 330
-#1 - 330
+page_limit = 345
+#1 - 345
 
 while (next_page is not None and page_limit > 0):
     driver.get(next_page)

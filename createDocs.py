@@ -59,7 +59,7 @@ def create_doc(d, t):
     client['dayTime_database']['dayTime_collection'].insert_one(dayTimeDocument)
 
 for d in day_to_number.keys():
-    i = 0.0
+    i = 18.0
     while i < 24.0:
         create_doc(d, i)
         i += 0.5
