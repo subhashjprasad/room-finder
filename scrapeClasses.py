@@ -119,6 +119,8 @@ def get_class_information(url):
     class_building = ' '.join(parts)
 
     if len(class_building) == 0: return
+    if class_building == "HAAS Faculty Wing": class_building = "Haas Faculty Wing"
+    if class_building == "Rec Sports Facility": class_building = "RSF"
     collection = db[class_building]
     collection.create_index([("occupied_times", 1)])
 
