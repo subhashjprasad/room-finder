@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 
 # Global MongoDB client initialization
 password = os.environ.get("DB_PASSWORD")
